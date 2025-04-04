@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import authService from "../../../appwrite/auth";
 import {login, logout} from "../../../store/authSlice";
+import { Phone } from 'iconsax-react'; // Importing the phone icon from Iconsax
 
 const Login_Empty = () => {
 
@@ -25,9 +26,58 @@ const Login_Empty = () => {
   // );
 
   return !loading ? (
-    <div className="min-vh-100 d-flex flex-wrap justify-content-between">
-      <div className="w-100">
-        Login
+    <div className="d-flex justify-content-center align-items-start vh-100 bg-light p-2">
+      <div
+        className="card p-4"
+        style={{
+          backgroundColor: '#00A3FF', // Blue background matching the image
+          // borderRadius: '20px', // Rounded corners
+          width: '100%',
+          maxWidth: '400px', // Card width
+          border: 'none', // Remove default card border
+          borderBottomRightRadius: "10rem",
+          height: "13rem"
+        }}
+      >
+        {/* Header with Login and Register */}
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h2
+            className="text-white mb-0"
+            style={{
+              fontSize: '24px', // Match font size
+              fontWeight: 'bold', // Match font weight
+            }}
+          >
+            Login
+          </h2>
+          <button
+            className="btn rounded-pill px-3 py-1"
+            style={{
+              backgroundColor: '#E6F0FA', // Light blue background for the button
+              color: '#00A3FF', // Blue text color
+              fontSize: '16px', // Match font size
+              fontWeight: '500', // Match font weight
+              border: 'none', // Remove default border
+              height: "3rem",
+              width: "8rem"
+            }}
+          >
+            Register
+          </button>
+        </div>
+
+        {/* Enter your mobile phone text */}
+        <div className="text-white text-start">
+          <p
+            className="mb-0"
+            style={{
+              fontSize: '22px', // Match font size
+              fontWeight: '400', // Match font weight
+            }}
+          >
+            Enter your mobile phone
+          </p>
+        </div>
       </div>
     </div>
   ) : null
