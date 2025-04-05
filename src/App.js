@@ -7,6 +7,8 @@ import Introduce_Step_3 from './Pages/OnBoarding/Introduce_Step_3/Introduce_Step
 import Introduce_Step_4 from './Pages/OnBoarding/Introduce Step 4/Introduce_Step_4';
 import Login_Empty from './Pages/Login/Login Empty/Login_Empty';
 import Get_OTP from './Pages/Login/Get OTP/Get_OTP';
+import Register from "./Pages/Sign Up/Register/Register";
+import UserInfo from './Pages/Sign Up/UserInfo/UserInfo';
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
           <Route path='/introduce_step_3' element={<Introduce_Step_3/>} />
           <Route path="/introduce_step_4" element={<Introduce_Step_4/>} />
           <Route path='/login_empty' element={<Login_Empty/>} /> 
+          <Route path='/register' element={<Register/>} /> 
+          <Route path='/userinfo' element={<UserInfo/>} />
           {/* <Route path='/get_otp' element={<Get_OTP/>} /> */}
         </Routes>
       </BrowserRouter>

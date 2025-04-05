@@ -1,118 +1,177 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import authService from "../../../appwrite/auth";
-import {login, logout} from "../../../store/authSlice";
-import { Phone } from 'iconsax-react'; // Importing the phone icon from Iconsax
+import { login, logout } from "../../../store/authSlice";
+import { Client, Account, ID } from "appwrite";
+import { useNavigate } from "react-router-dom";
+
+const client = new Client()
+  .setEndpoint("https://cloud.appwrite.io/v1")
+  .setProject("67ecb5da000a4232b43e");
+
+const account = new Account(client);
 
 const Login_Empty = () => {
-
-  const [loading, setLoading] = useState(true);
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [userId, setUserId] = useState("");
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const formattedPhone = phone.startsWith("+") ? phone : `+${phone}`;
+      const generatedUserId = ID.unique();
+      const response = await account.createPhoneToken(generatedUserId, formattedPhone);
+      console.log("createPhoneToken response:", response); // Debug token creation
+      setUserId(generatedUserId);
+      setIsOtpSent(true);
+      alert("OTP has been sent to your phone!");
+    } catch (err) {
+      console.error("Send OTP error:", err);
+      setError(err.message || "Failed to send OTP.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      console.log("Verifying with userId:", userId, "and OTP:", otp);
+      const session = await account.updatePhoneSession(userId, otp);
+      console.log("Session created:", session);
+      alert("Login successful!");
+
+      const userData = await account.get();
+      dispatch(login({ userData }));
+    } catch (err) {
+      console.error("Verification error:", err);
+      setError(err.message || "OTP verification failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    authService.getCurrentUser()
-    .then((userData) => {
-      if (userData) {
-        dispatch(login({userData}))
-      }else{
-        dispatch(logout())
-      }
-    })
-    .finally(() => setLoading(false))
-  }, [dispatch])
-
-  // return (
-  //   <div>Login_Empty</div>
-  // );
+    authService
+      .getCurrentUser()
+      .then((userData) => {
+        if (userData) {
+          dispatch(login({ userData }));
+        } else {
+          dispatch(logout());
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [dispatch]);
 
   return !loading ? (
-    <div className="d-flex justify-content-center align-items-start vh-100 bg-light p-2">
+    <div className="justify-content-center align-items-start vh-100 bg-light p-2">
       <div
         className="card p-4"
         style={{
-          backgroundColor: '#00A3FF', // Blue background matching the image
-          // borderRadius: '20px', // Rounded corners
-          width: '100%',
-          maxWidth: '400px', // Card width
-          border: 'none', // Remove default card border
+          backgroundColor: "#00A3FF",
+          width: "100%",
+          border: "none",
           borderBottomRightRadius: "10rem",
-          height: "13rem"
+          height: "13rem",
         }}
       >
-        {/* Header with Login and Register */}
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h2
-            className="text-white mb-0"
-            style={{
-              fontSize: '24px', // Match font size
-              fontWeight: 'bold', // Match font weight
-            }}
-          >
+          <h2 className="text-white mb-0" style={{ fontSize: "24px", fontWeight: "bold" }}>
             Login
           </h2>
           <button
             className="btn rounded-pill px-3 py-1"
             style={{
-              backgroundColor: '#E6F0FA', // Light blue background for the button
-              color: '#00A3FF', // Blue text color
-              fontSize: '16px', // Match font size
-              fontWeight: '500', // Match font weight
-              border: 'none', // Remove default border
+              backgroundColor: "#E6F0FA",
+              color: "#00A3FF",
+              fontSize: "16px",
+              fontWeight: "500",
+              border: "none",
               height: "3rem",
-              width: "8rem"
+              width: "8rem",
             }}
           >
             Register
           </button>
         </div>
-
-        {/* Enter your mobile phone text */}
         <div className="text-white text-start">
-          <p
-            className="mb-0"
-            style={{
-              fontSize: '22px', // Match font size
-              fontWeight: '400', // Match font weight
-            }}
-          >
+          <p className="mb-0" style={{ fontSize: "22px", fontWeight: "400" }}>
             Enter your mobile phone
           </p>
         </div>
       </div>
+
+      <div className="">
+        <div className="card mt-4">
+          <div className="card-header">
+            <h3 className="text-center">Phone Login</h3>
+          </div>
+          <div className="card-body">
+            {!isOtpSent ? (
+              <form onSubmit={handleSendOtp}>
+                <div className="mb-3">
+                  <label htmlFor="phone" className="form-label">
+                    Phone Number (with country code, e.g., +91234567890)
+                  </label>
+                  <input
+                    type="tel"
+                    className="form-control"
+                    id="phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+91234567890"
+                    required
+                  />
+                </div>
+                {error && <div className="alert alert-danger">{error}</div>}
+                <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+                  {loading ? "Sending..." : "Send OTP"}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOtp}>
+                <div className="mb-3">
+                  <label htmlFor="otp" className="form-label">
+                    Enter OTP
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="otp"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Enter 6-digit OTP"
+                    required
+                  />
+                </div>
+                {error && <div className="alert alert-danger">{error}</div>}
+                <button type="submit" className="btn btn-primary w-100" disabled={loading} onClick={() => navigate("/register")}>
+                  
+                  {loading ? "Verifying..." : "Verify OTP" }
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
-  ) : null
+  ) : null;
 };
 
 export default Login_Empty;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // import React, { useState, useEffect } from 'react';
