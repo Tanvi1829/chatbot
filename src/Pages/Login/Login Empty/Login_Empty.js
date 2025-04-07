@@ -4,6 +4,9 @@ import authService from "../../../appwrite/auth";
 import { login, logout } from "../../../store/authSlice";
 import { Client, Account, ID } from "appwrite";
 import { useNavigate } from "react-router-dom";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css"; // Import the default styles
+import "./Login_Empty.css";
 
 const client = new Client()
   .setEndpoint("https://cloud.appwrite.io/v1")
@@ -27,13 +30,16 @@ const Login_Empty = () => {
     setError("");
 
     try {
-      const formattedPhone = phone.startsWith("+") ? phone : `+${phone}`;
-      const generatedUserId = ID.unique();
+      const formattedPhone = `+${phone}`;
+      const generatedUserId = ID.unique(); // This should generate a valid UUID
+      console.log("Generated userId:", generatedUserId); // Debug the userId
       const response = await account.createPhoneToken(generatedUserId, formattedPhone);
       console.log("createPhoneToken response:", response); // Debug token creation
       setUserId(generatedUserId);
       setIsOtpSent(true);
       alert("OTP has been sent to your phone!");
+      // Navigate to Get_OTP page with state
+      navigate("/get-otp", { state: { phone: formattedPhone, userId: generatedUserId } });
     } catch (err) {
       console.error("Send OTP error:", err);
       setError(err.message || "Failed to send OTP.");
@@ -47,6 +53,12 @@ const Login_Empty = () => {
     setLoading(true);
     setError("");
 
+    if (!userId) {
+      setError("User ID is not set. Please request a new OTP.");
+      setLoading(false);
+      return;
+    }
+
     try {
       console.log("Verifying with userId:", userId, "and OTP:", otp);
       const session = await account.updatePhoneSession(userId, otp);
@@ -55,6 +67,7 @@ const Login_Empty = () => {
 
       const userData = await account.get();
       dispatch(login({ userData }));
+      navigate("/userinfo"); // Redirect to dashboard or home after login
     } catch (err) {
       console.error("Verification error:", err);
       setError(err.message || "OTP verification failed.");
@@ -69,23 +82,25 @@ const Login_Empty = () => {
       .then((userData) => {
         if (userData) {
           dispatch(login({ userData }));
+          navigate("/userinfo"); // Redirect if already logged in
         } else {
           dispatch(logout());
         }
       })
+      .catch((err) => console.error("Error checking current user:", err))
       .finally(() => setLoading(false));
-  }, [dispatch]);
+  }, [dispatch, navigate]);
 
   return !loading ? (
     <div className="justify-content-center align-items-start vh-100 bg-light p-2">
       <div
-        className="card p-4"
+        className="card p-4 text-white"
         style={{
-          backgroundColor: "#00A3FF",
-          width: "100%",
-          border: "none",
-          borderBottomRightRadius: "10rem",
-          height: "13rem",
+          background: "linear-gradient(135deg, #00A3FF, #007BFF)",
+          borderRadius: "15px",
+          borderBottomRightRadius: "100px",
+          height: "200px",
+          overflow: "hidden",
         }}
       >
         <div className="d-flex justify-content-between align-items-center mb-3">
@@ -103,6 +118,7 @@ const Login_Empty = () => {
               height: "3rem",
               width: "8rem",
             }}
+            onClick={() => navigate("/register")}
           >
             Register
           </button>
@@ -114,66 +130,110 @@ const Login_Empty = () => {
         </div>
       </div>
 
-      <div className="">
-        <div className="card mt-4">
-          <div className="card-header">
-            <h3 className="text-center">Phone Login</h3>
+      <div
+        className="card mt-4 p-4"
+        style={{
+          borderRadius: "15px",
+          boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+          marginTop: "-50px",
+          backgroundColor: "#fff",
+          position: "relative",
+        }}
+      >
+        <p className="text-center text-muted mb-4">You will get a code via sms.</p>
+        <form onSubmit={handleSendOtp}>
+          <div className="mb-3">
+            <PhoneInput
+              country={"gb"} // Default to UK
+              value={phone}
+              onChange={setPhone}
+              placeholder="Enter phone number"
+              inputProps={{
+                name: "phone",
+                required: true,
+              }}
+              containerClass="mb-3"
+              inputClass="form-control" // Bootstrap styling
+              inputStyle={{
+                width: "100%",
+                padding: "10px 12px",
+                border: "1px solid #ced4da",
+                borderRadius: "4px",
+                fontSize: "16px",
+              }}
+            />
           </div>
-          <div className="card-body">
-            {!isOtpSent ? (
-              <form onSubmit={handleSendOtp}>
-                <div className="mb-3">
-                  <label htmlFor="phone" className="form-label">
-                    Phone Number (with country code, e.g., +91234567890)
-                  </label>
-                  <input
-                    type="tel"
-                    className="form-control"
-                    id="phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+91234567890"
-                    required
-                  />
-                </div>
-                {error && <div className="alert alert-danger">{error}</div>}
-                <button type="submit" className="btn btn-primary w-100" disabled={loading}>
-                  {loading ? "Sending..." : "Send OTP"}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyOtp}>
-                <div className="mb-3">
-                  <label htmlFor="otp" className="form-label">
-                    Enter OTP
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="otp"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter 6-digit OTP"
-                    required
-                  />
-                </div>
-                {error && <div className="alert alert-danger">{error}</div>}
-                <button type="submit" className="btn btn-primary w-100" disabled={loading} onClick={() => navigate("/register")}>
-                  
-                  {loading ? "Verifying..." : "Verify OTP" }
-                </button>
-              </form>
-            )}
+          <div className="form-check mb-3">
+            <input type="checkbox" className="form-check-input" id="rememberMe" />
+            <label className="form-check-label" htmlFor="rememberMe">
+              Remember me
+            </label>
           </div>
-        </div>
+          {error && <div className="alert alert-danger">{error}</div>}
+          <button
+            type="submit"
+            className="btn"
+            style={{
+              backgroundColor: "#00A3FF",
+              color: "#fff",
+              border: "none",
+              borderRadius: "50%",
+              width: "50px",
+              height: "50px",
+              position: "absolute",
+              right: "20px",
+              bottom: "20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            disabled={loading}
+          >
+            {loading ? "..." : "→"}
+          </button>
+        </form>
+
+        {/* OTP Form (hidden since we navigate to Get_OTP) */}
+        {/* {isOtpSent && (
+          <form onSubmit={handleVerifyOtp} className="mt-4">
+            <div className="mb-3">
+              <label htmlFor="otp" className="form-label">
+                Enter OTP
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                id="otp"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Enter 6-digit OTP"
+                required
+              />
+            </div>
+            {error && <div className="alert alert-danger">{error}</div>}
+            <button
+              type="submit"
+              className="btn btn-primary w-100"
+              disabled={loading}
+            >
+              {loading ? "Verifying..." : "Verify OTP"}
+            </button>
+          </form>
+        )} */}
       </div>
     </div>
-  ) : null;
+  ) : (
+    <div className="d-flex justify-content-center align-items-center vh-100">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  );
 };
 
 export default Login_Empty;
 
-
+// phone.startsWith("+") ? phone : 
 // import React, { useState, useEffect } from 'react';
 // import 'bootstrap/dist/css/bootstrap.min.css';
 // import { Form, Button, Container, Row, Col } from 'react-bootstrap';

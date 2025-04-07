@@ -24,7 +24,7 @@ function App() {
           <Route path='/login_empty' element={<Login_Empty/>} /> 
           <Route path='/register' element={<Register/>} /> 
           <Route path='/userinfo' element={<UserInfo/>} />
-          {/* <Route path='/get_otp' element={<Get_OTP/>} /> */}
+          <Route path='/get_otp' element={<Get_OTP/>} />
         </Routes>
       </BrowserRouter>
     </div>

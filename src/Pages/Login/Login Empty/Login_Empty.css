@@ -1,0 +1,32 @@
+.react-tel-input .country-list {
+    outline:none;
+    z-index:1;
+    list-style:none;
+    position:absolute;
+    padding:0;
+    margin:10px 0 10px -1px;
+    box-shadow:1px 2px 10px rgba(0,0,0,0.35);
+    background-color:white;
+    width:300px;
+    max-height:200px;
+    overflow-y:scroll;
+    border-radius:0 0 3px 3px;
+    text-align: justify;
+}
+
+.form-check .form-check-input {
+    float: left;
+    /* margin-left: -1.5em; */
+}
+.form-check {
+    display: block;
+    min-height: 1.5rem;
+    /* padding-left: 1.5em; */
+    margin-bottom: .125rem;
+    text-align: justify;
+}
+
+.form-check-input[type=checkbox] {
+    border-radius: 0.25em;
+    border-color: black;
+}
